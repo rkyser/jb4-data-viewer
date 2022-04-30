@@ -1,9 +1,5 @@
 terraform {
   required_providers {
-    grafana = {
-      source = "grafana/grafana"
-      version = "1.21.1"
-    }
     docker = {
       source = "kreuzwerker/docker"
       version = "2.16.0"
@@ -11,6 +7,10 @@ terraform {
     random = {
       source = "hashicorp/random"
       version = "3.1.3"
+    }
+    grafana = {
+      source = "grafana/grafana"
+      version = "1.22.0"
     }
   }
 }
@@ -20,26 +20,8 @@ resource "random_password" "influxdb_admin_token" {
   special = false
 }
 
-resource "random_password" "influxdb_admin_password" {
-  length = 10
-  special = false
-}
-
-resource "random_password" "grafana_admin_password" {
-  length = 10
-  special = false
-}
-
 provider "docker" {
   host = "unix:///var/run/docker.sock"
-}
-
-resource "docker_image" "grafana" {
-  name = "grafana/grafana-oss:8.2.6"
-}
-
-resource "docker_image" "influxdb2" {
-  name = "influxdb:2.2"
 }
 
 resource "docker_network" "private_network" {
@@ -47,58 +29,28 @@ resource "docker_network" "private_network" {
   attachable = true
 }
 
-## TODO: need to back containers with volumes
-
-resource "docker_container" "jb4_grafana" {
-  image = docker_image.grafana.latest
-  name  = "jb4_grafana"
-  networks_advanced {
-    name = "${docker_network.private_network.name}"
-  }
-  ports {
-      internal = 3000
-      external = 3001
-  }
-  env = [
-      "GF_SECURITY_ADMIN_USER=admin",
-      "GF_SECURITY_ADMIN_PASSWORD=${random_password.grafana_admin_password.result}"
-  ]
+module "docker_grafana" {
+    source = "./modules/docker_grafana"
+    docker_net_name = "${docker_network.private_network.name}"
+    docker_volume_name = "jb4-grafana-volume2"
+    docker_container_name = "jb4-grafana"
+    admin_username = "admin"
+    admin_password = "password"
 }
 
-# https://hub.docker.com/_/influxdb
-resource "docker_container" "jb4_influxdb2" {
-  image = docker_image.influxdb2.latest
-  name  = "jb4_influxdb2"
-  networks_advanced {
-    name = "${docker_network.private_network.name}"
-  }
-  ports {
-      internal = 8086
-      external = 8087
-  }
-  env = [
-      "DOCKER_INFLUXDB_INIT_MODE=setup",
-      "DOCKER_INFLUXDB_INIT_USERNAME=admin",
-      "DOCKER_INFLUXDB_INIT_PASSWORD=${random_password.influxdb_admin_password.result}",
-      "DOCKER_INFLUXDB_INIT_ORG=org0",
-      "DOCKER_INFLUXDB_INIT_BUCKET=bucket0",
-      "DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${random_password.influxdb_admin_token.result}"
-  ]
+module "docker_influxdb2" {
+    source = "./modules/docker_influxdb2"
+    docker_net_name = "${docker_network.private_network.name}"
+    docker_volume_name = "jb4-influxdb2-volume"
+    docker_container_name = "jb4-influxdb2"
+    admin_username = "admin"
+    admin_password = "password"
+    admin_token = "${random_password.influxdb_admin_token.result}"
 }
 
-## Outputs
-
-output "influxdb_admin_password" {
-  value = random_password.influxdb_admin_password.result
-  sensitive = true
-}
-
-output "influxdb_admin_token" {
-  value = random_password.influxdb_admin_token.result
-  sensitive = true
-}
-
-output "grafana_admin_password" {
-  value = random_password.grafana_admin_password.result
-  sensitive = true
+# https://registry.terraform.io/providers/grafana/grafana/latest/docs#auth
+provider "grafana" {
+  alias = "base"
+  url   = "http://localhost:3001"
+  auth  = "${var.admin_username}:${var.admin_password}"
 }

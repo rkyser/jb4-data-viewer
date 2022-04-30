@@ -2,15 +2,27 @@
 
 This app can be used to view and analyze data exported from a JB4 tuner. It is a work-in-progress at this point.
 
-# Setup Requirements
+## Setup Requirements
 
 1. Docker
 2. Python3
 3. Terraform
 
-# Grafana Queries
+## Getting Started
 
-## RPM
+Clone or download this repo.
+
+Run the following Terraform commands to initialize Grafana w/ InfluxDB2 Docker containers.
+
+```
+terraform init
+terraform plan
+terraform apply
+```
+
+## Grafana Queries
+
+### RPM
 
 ```
 from(bucket: "jb4")
