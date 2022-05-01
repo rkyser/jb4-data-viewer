@@ -43,22 +43,3 @@ resource "docker_container" "grafana_container" {
       "GF_SECURITY_ADMIN_PASSWORD=${var.admin_password}"
   ]
 }
-
-
-
-# resource "grafana_organization" "my_org" {
-#   provider = grafana.base
-#   name     = "Testing123"
-# }
-
-# resource "grafana_data_source" "influxdb" {
-#   type          = "influxdb"
-#   name          = "myapp-metrics"
-#   url           = "http://jb4-influxdb2:8086/"
-#   username      = "myapp"
-#   password      = "foobarbaz"
-#   json_data {
-#     organization = "MyOrg"
-#     default_bucket = "MyBucket" 
-#   }
-# }

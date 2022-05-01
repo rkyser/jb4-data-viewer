@@ -2,7 +2,6 @@ import argparse
 import datetime
 from os.path import exists
 import pprint
-from sqlite3 import Timestamp
 from Jb4CsvReader import Jb4CsvReader
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -28,7 +27,6 @@ if not exists(influxdb_config):
 client = InfluxDBClient.from_config_file(influxdb_config)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
-# 
 def format_my_nanos(nanos):
     dt = datetime.datetime.fromtimestamp(nanos / 1e9)
     return '{}{:03.0f}'.format(dt.strftime('%Y-%m-%dT%H:%M:%S.%f'), nanos % 1e3)
