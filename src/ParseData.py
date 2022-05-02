@@ -1,14 +1,12 @@
 import argparse
 import datetime
 from os.path import exists
-import pprint
 from Jb4CsvReader import Jb4CsvReader
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 parser = argparse.ArgumentParser(description='Import JB4 CSV to InfluxDB')
-parser.add_argument('--file', type=str, required=True, help='JB4 CSV file')
-parser.add_argument('--influxdb-bucket', type=str, help='Bucket to write JB4 data to')
+parser.add_argument('--jb4-csv', type=str, required=True, help='JB4 CSV file')
 parser.add_argument('--influxdb-config', type=str, help='Config file for influxdb client')
 args = parser.parse_args()
 
@@ -33,7 +31,6 @@ def format_my_nanos(nanos):
 
 with open(csv_filepath, newline='') as csvfile:
     jb4reader = Jb4CsvReader(csvfile)
-#    pprint.pprint(jb4reader.parameters)
     for sample in jb4reader:
         point = Point.from_dict({
             'measurement': 'sample',
